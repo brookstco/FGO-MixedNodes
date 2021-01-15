@@ -111,56 +111,56 @@ class Mat(IntEnum):
     # Demon Flame Lantern
     DEMONFLAME = 46
 
-class Criteria(IntEnum):
+class Op(IntEnum):
     AVERAGE = 0
     MAX = 1
     WEIGHTEDAVG = 2 #This is optimal I think
 
 
-class Node:
-    # returns True if this node drops all of the materials
-    def hasMats(self, mats: [int]):
-        for i in mats:
-            if self.matAPD[i] is None:
-                return False
-        return True
+# class Node:
+#     # returns True if this node drops all of the materials
+#     def hasMats(self, mats: [int]):
+#         for i in mats:
+#             if self.matAPD[i] is None:
+#                 return False
+#         return True
 
-    # Gets a filtered sublist
-    def sublist(self, mats: [int]):
-        # return [matAPD[i] for i in ids if matAPD[i] != None] #Should have already been checked.
-        return [self.matAPD[i] for i in mats]
+#     # Gets a filtered sublist
+#     def sublist(self, mats: [int]):
+#         # return [matAPD[i] for i in ids if matAPD[i] != None] #Should have already been checked.
+#         return [self.matAPD[i] for i in mats]
 
-    def sublistWeighted(self, mats: [int]):
-        sublist = []
-        weight = 0
-        for i in mats:
-            # if matAPD[i] != None: #Should have already been checked.
-            sublist.append(self.matAPD[i] * matWeights[i])
-            weight += matWeights[i]
-        return sublist, weight
+#     def sublistWeighted(self, mats: [int]):
+#         sublist = []
+#         weight = 0
+#         for i in mats:
+#             # if matAPD[i] != None: #Should have already been checked.
+#             sublist.append(self.matAPD[i] * matWeights[i])
+#             weight += matWeights[i]
+#         return sublist, weight
 
-    # Returns the average APD for a list of materials or None if none of those mats drop
-    def avgAPD(self, mats: [int]):
-        apd = self.sublist(mats)
-        if not apd:
-            return None
-        return math.fsum(apd) / len(mats)
+#     # Returns the average APD for a list of materials or None if none of those mats drop
+#     def avgAPD(self, mats: [int]):
+#         apd = self.sublist(mats)
+#         if not apd:
+#             return None
+#         return math.fsum(apd) / len(mats)
 
-    # Returns the highest APD for a list of materials or None if none of those mats drop
-    def maxAPD(self, mats: [int]):
-        apd = self.sublist(mats)
-        if not apd:
-            return None
-        return max(apd)
+#     # Returns the highest APD for a list of materials or None if none of those mats drop
+#     def maxAPD(self, mats: [int]):
+#         apd = self.sublist(mats)
+#         if not apd:
+#             return None
+#         return max(apd)
 
-    # def DropsPerAP(mats):
-    #    apd = sublist(mats)
+#     # def DropsPerAP(mats):
+#     #    apd = sublist(mats)
 
-    def weightedAvgAPD(self, mats: [int]):
-        apd, weight = self.sublistWeighted(mats)
-        if not apd:
-            return None
-        return math.fsum(apd) / weight
+#     def weightedAvgAPD(self, mats: [int]):
+#         apd, weight = self.sublistWeighted(mats)
+#         if not apd:
+#             return None
+#         return math.fsum(apd) / weight
 
 
 #Loads the drop data for the nodes into a pd.dataframe 
@@ -169,22 +169,15 @@ def loadData(filename:str, jp = False) -> pd.DataFrame:
     #column indices that are actually used - remember this is 0 indexed
     #Note that the column numbers are different on jp and NA pages - this is NA
     cols = [1,2] + list(range((9-1),55))
-    skiprows = [0,1,2]
     matNames = ["CLAW", "HEART", "SCALE", "ROOT", "HORN", "TEARSTONE", "GREASE", "LAMP", "SCARAB", "LANUGO", "GALLSTONE", "WINE", "CORE", "MIRROR", "EGG", "STAR", "FRUIT", "DEMONFLAME", "SEED", "LANTERN", "OCTUPLET", "SERPENT", "FEATHER", "GEAR", "PAGE", "BABY", "HORSESHOE", "KNIGHT", "SHELL", "MAGATAMA", "ICE", "RING", "STEEL", "BELL", "ARROW", "TIARA", "PARTICLE", "THREAD", "PROOF", "BONE", "FANG", "DUST", "CHAIN", "NEEDLE", "FLUID", "STAKE", "GUNPOWDER"]
     #index doesn't get names
     colNames = ["id", "name"] + matNames
 
     #csv needs all closed nodes, the extra headers removed. The extra cols can probably be filtered, but its easier to remove in csv, since widths may be different
-    filename="apd_na2.csv"
-
 
     with open(filename, "r") as file:
         #df = pd.read_csv(file, skiprows=skiprows, usecols=cols, header=None, names=colNames)
         df = pd.read_csv(file, header=None, names=colNames)
-        #remove jp only rows
-        #jponlyrows = [170-1-3] + list(range(218-1-3, 260-3))
-        #df.drop(jponlyrows, inplace=True)
-        #df = df.astype(np.float64, errors='ignore')
         return df
 
 #Returns a pd.df with all the ineligible nodes removed.
@@ -194,16 +187,15 @@ def filterNodes(mats:[int]) -> pd.DataFrame:
 #Sets Matweights above to a list of the lowest apd for each mat
 def getWeights(nodes: pd.DataFrame) -> [float]:
     mats = nodes.drop(["id", "name"], axis=1)
-    minCols = mats.min()
     matWeights = mats.min().tolist()
+    return matWeights
 
 if __name__ == "__main__":
-
     # combo1 = list(itertools.combinations(range(0,31), 1))
     # combo2 = list(itertools.combinations(range(0,31), 2))
 
     #################################################
-    # ONLY EDIT IN THIS BOX
+    # Only edit variables below
     # 
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
@@ -211,6 +203,9 @@ if __name__ == "__main__":
 
     # JP or NA server
     jp = False
+
+    # Operation to judge which mixed modes are better. Weighted average is recommended
+    op = Op.WEIGHTEDAVG
 
     # Don't edit below this line (unless you want to)
     ##################################################
