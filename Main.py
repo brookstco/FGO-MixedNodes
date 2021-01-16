@@ -3,12 +3,12 @@
 #import numpy as np
 import pandas as pd
 import itertools
+from itertools import combinations, chain
 import math
 from enum import IntEnum
 #from collections import defaultdict
 
-#TODO: Put enum numbers in same order as the csv list for weight accessing
-#These were used in an older test version. Still here since they do make customizing selections easier. We'll see.
+#Mats in the order of the csv. Value can be used as index for matweights, and .name can be used as the column names in the pd.df
 class Mat(IntEnum):
     # GOLD
     # Claw of Chaos
@@ -112,15 +112,25 @@ class Mat(IntEnum):
     # Mystic Gunpowder
     GUNPOWDER = 46
 
+def matNamesList(mats:[Mat]) -> [str]:
+    return [i.name for i in mats]
+
 
 class Op(IntEnum):
     AVERAGE = 0
     MAX = 1
     WEIGHTEDAVG = 2 #This is optimal I think
 
+class NodeSet:
+    #List of row ids from the df.
+    nodeIds:[int] = []
+    #The value of the NodeSet. Lower is better. 0 or less is invalid
+    value:float = 0
+
 
 # # Returns the average APD for a list of materials or None if none of those mats drop
 # def avgAPD(mats: [int]):
+    #TAke in pd.df, filter by mats, use pd.sum, divide by len of mats list
 #     apd = sublist(mats)
 #     if not apd:
 #         return None
@@ -128,6 +138,7 @@ class Op(IntEnum):
 
 # # Returns the highest APD for a list of materials or None if none of those mats drop
 # def maxAPD(mats: [int]):
+    #TAke in pd.df, filter by mats, get max
 #     apd = sublist(mats)
 #     if not apd:
 #         return None
@@ -169,8 +180,8 @@ def loadData(filename:str, jp = False) -> pd.DataFrame:
         return df
 
 #Returns a pd.df with all the ineligible nodes removed.
-def filterNodes(mats:[int]) -> pd.DataFrame:
-    return nodes.dropna(subset=mats)
+def filterNodes(mats:[Mat]) -> pd.DataFrame:
+    return nodes.dropna(subset = matNamesList(mats))
 
 #Sets Matweights above to a list of the lowest apd for each mat
 def getWeights(nodes: pd.DataFrame) -> [float]:
@@ -179,8 +190,20 @@ def getWeights(nodes: pd.DataFrame) -> [float]:
     return matWeights
 
 
-    # combo1 = list(itertools.combinations(range(0,31), 1))
-    # combo2 = list(itertools.combinations(range(0,31), 2))
+def generateSplits(mats:[Mat]) -> []:
+    subsets = [v for a in range(len(x)) for v in combinations(x, a)]
+    for i in range(len(subsets)/2 + 1):
+        print list(chain(subsets[i])), ' ', [e for e in x if e not in subsets[i]]
+
+def getNodeSets(nodes: pd.DataFrame, mats:[Mat]):
+    pass
+
+
+
+
+
+# combo1 = list(itertools.combinations(range(0,31), 1))
+# combo2 = list(itertools.combinations(range(0,31), 2))
 
 if __name__ == "__main__":
 
@@ -208,10 +231,11 @@ if __name__ == "__main__":
     # Advanced Settings 
 
     # When multiple mats are selected, it check each grouping of mats.
-    # This controls how many results can come from a single combination. 
-    maxCombinations:int = None
+    # This controls how many results can come from a single combination. 0 will allow the maximum amount.
+    maxNodeCombinations:int = 0
 
-    # Total results in the output file
+    # Total results in the output file. 0 will allow the maximum amount.
+    maxOutputNodes:int = 0
 
     # Don't edit below this line (unless you want to)
     ##################################################
@@ -227,12 +251,14 @@ if __name__ == "__main__":
     matWeights = getWeights(nodes)
 
 
-    filteredTest = filterNodes(["CORE", "HEART"])
+    filteredTest = filterNodes([Mat.CORE, Mat.HEART])
     if not filteredTest.empty:
         print(filteredTest)
     else:
         print("No possible nodes")
 
+
+    outputNodes:[NodeSet] = []
 
     if saveToFile:
         if readableOutput:
