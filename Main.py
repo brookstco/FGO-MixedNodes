@@ -1,115 +1,117 @@
 # CBrooks 2021
 
-import numpy as np
+#import numpy as np
 import pandas as pd
 import itertools
 import math
 from enum import IntEnum
-from collections import defaultdict
+#from collections import defaultdict
 
+#TODO: Put enum numbers in same order as the csv list for weight accessing
 #These were used in an older test version. Still here since they do make customizing selections easier. We'll see.
 class Mat(IntEnum):
-    # BRONZE
-    # Proof of Hero
-    PROOF = 0
-    # Evil Bone
-    BONE = 1
-    # Dragon Fang
-    FANG = 2
-    # Void's Dust
-    DUST = 3
-    # Fool's Chain
-    CHAIN = 4
-    # Deadly Poisonous Needle
-    NEEDLE = 5
-    # Mystic Spinal Fluid
-    FLUID = 6
-    # Stake of Wailing Night
-    STAKE = 7
-    # Mystic Gunpowder
-    GUNPOWDER = 8
+    # GOLD
+    # Claw of Chaos
+    CLAW = 0
+    # Heart of the Foreign God
+    HEART = 1
+    # Dragon's Reverse Scale
+    SCALE = 2
+    # Spirit Root
+    ROOT = 3
+    # Warhorse's Young Horn
+    HORN = 4
+    # Tearstone of Blood
+    TEARSTONE = 5
+    # Black Beast Grease
+    GREASE = 6
+    # Lamp of Evil-Sealing
+    LAMP = 7
+    # Scarab of Wisdom
+    SCARAB = 8
+    # Primordial Lanugo
+    LANUGO = 9
+    # Cursed Beast Gallstone
+    GALLSTONE = 10
+    # Mysterious Divine Wine
+    WINE = 11
+    # Reactor Core of Dawn
+    CORE = 12
+    # JP ONLY
+    # Tsukumo Mirror
+    MIRROR = 13
+    # Egg of Truth
+    EGG = 14
+    # Glittering Star Shard
+    STAR = 15
+    # Fruit of Eternity
+    FRUIT = 16
+    # Demon Flame Lantern
+    DEMONFLAME = 17
 
     # SILVER
     # Seed of Yggdrasil
-    SEED = 9
+    SEED = 18
     # Ghost Lantern
-    LANTERN = 10
+    LANTERN = 19
     # Octuplet Crystal
-    OCTUPLET = 11
+    OCTUPLET = 20
     # Serpent Jewel
-    SERPENT = 12
+    SERPENT = 21
     # Phoenix Feather
-    FEATHER = 13
+    FEATHER = 22
     # Eternal Gear
-    GEAR = 14
+    GEAR = 23
     # Forbidden Page
-    PAGE = 15
+    PAGE = 24
     # Homunculus Baby
-    BABY = 16
+    BABY = 25
     # Meteor Horseshoe
-    HORSESHOE = 17
+    HORSESHOE = 26
     # Great Knight Medal
-    KNIGHT = 18
+    KNIGHT = 27
     # Shell of Reminiscense
-    SHELL = 19
+    SHELL = 28
     # Refined Magatama
-    MAGATAMA = 20
+    MAGATAMA = 29
     # Eternal Ice
-    ICE = 21
+    ICE = 30
     # Giant's Ring
-    RING = 22
+    RING = 31
     # Aurora Steel
-    STEEL = 23
+    STEEL = 32
     # Soundless Bell
-    BELL = 24
+    BELL = 33
     # JP ONLY
     # Arrowhead of Disastrous Sin
-    ARROW = 25
+    ARROW = 34
     # Moonlit Tiara
-    TIARA = 26
+    TIARA = 35
     # Divine Spirit Particle
-    PARTICLE = 27
+    PARTICLE = 36
     # Rainbow Thread Ball
-    THREAD = 28
+    THREAD = 37
 
-    # GOLD
-    # Claw of Chaos
-    CLAW = 29
-    # Heart of the Foreign God
-    HEART = 30
-    # Dragon's Reverse Scale
-    SCALE = 31
-    # Spirit Root
-    ROOT = 32
-    # Warhorse's Young Horn
-    HORN = 33
-    # Tearstone of Blood
-    TEARSTONE = 34
-    # Black Beast Grease
-    GREASE = 35
-    # Lamp of Evil-Sealing
-    LAMP = 36
-    # Scarab of Wisdom
-    SCARAB = 37
-    # Primordial Lanugo
-    LANUGO = 38
-    # Cursed Beast Gallstone
-    GALLSTONE = 39
-    # Mysterious Divine Wine
-    WINE = 40
-    # Reactor Core of Dawn
-    CORE = 41
-    # JP ONLY
-    # Tsukumo Mirror
-    MIRROR = 42
-    # Egg of Truth
-    EGG = 43
-    # Glittering Star Shard
-    STAR = 44
-    # Fruit of Eternity
-    FRUIT = 45
-    # Demon Flame Lantern
-    DEMONFLAME = 46
+    # BRONZE
+    # Proof of Hero
+    PROOF = 38
+    # Evil Bone
+    BONE = 39
+    # Dragon Fang
+    FANG = 40
+    # Void's Dust
+    DUST = 41
+    # Fool's Chain
+    CHAIN = 42
+    # Deadly Poisonous Needle
+    NEEDLE = 43
+    # Mystic Spinal Fluid
+    FLUID = 44
+    # Stake of Wailing Night
+    STAKE = 45
+    # Mystic Gunpowder
+    GUNPOWDER = 46
+
 
 class Op(IntEnum):
     AVERAGE = 0
@@ -117,63 +119,49 @@ class Op(IntEnum):
     WEIGHTEDAVG = 2 #This is optimal I think
 
 
-# class Node:
-#     # returns True if this node drops all of the materials
-#     def hasMats(self, mats: [int]):
-#         for i in mats:
-#             if self.matAPD[i] is None:
-#                 return False
-#         return True
+# # Returns the average APD for a list of materials or None if none of those mats drop
+# def avgAPD(mats: [int]):
+#     apd = sublist(mats)
+#     if not apd:
+#         return None
+#     return math.fsum(apd) / len(mats)
 
-#     # Gets a filtered sublist
-#     def sublist(self, mats: [int]):
-#         # return [matAPD[i] for i in ids if matAPD[i] != None] #Should have already been checked.
-#         return [self.matAPD[i] for i in mats]
+# # Returns the highest APD for a list of materials or None if none of those mats drop
+# def maxAPD(mats: [int]):
+#     apd = sublist(mats)
+#     if not apd:
+#         return None
+#     return max(apd)
 
-#     def sublistWeighted(self, mats: [int]):
-#         sublist = []
-#         weight = 0
-#         for i in mats:
-#             # if matAPD[i] != None: #Should have already been checked.
-#             sublist.append(self.matAPD[i] * matWeights[i])
-#             weight += matWeights[i]
-#         return sublist, weight
+# Returns weighted APD for a node (in list form)
+def weightedAvgAPDList(nodeAPD:[float], mats: [int], matWeights: [float]) -> float:
+    weighted: float = 0
+    weight: float = 0
+    for i in mats:
+        weighted += (nodeAPD[i] * matWeights[i])
+        weight += matWeights[i]
+    return weighted / weight
 
-#     # Returns the average APD for a list of materials or None if none of those mats drop
-#     def avgAPD(self, mats: [int]):
-#         apd = self.sublist(mats)
-#         if not apd:
-#             return None
-#         return math.fsum(apd) / len(mats)
-
-#     # Returns the highest APD for a list of materials or None if none of those mats drop
-#     def maxAPD(self, mats: [int]):
-#         apd = self.sublist(mats)
-#         if not apd:
-#             return None
-#         return max(apd)
-
-#     # def DropsPerAP(mats):
-#     #    apd = sublist(mats)
-
-#     def weightedAvgAPD(self, mats: [int]):
-#         apd, weight = self.sublistWeighted(mats)
-#         if not apd:
-#             return None
-#         return math.fsum(apd) / weight
+# Returns weighted APD for a node. The node should be passed in as a single row dataframe.
+def weightedAvgAPD(nodeAPD:pd.DataFrame, mats: [Mat], matWeights: [float]) -> float:
+    weighted: float = 0
+    weight: float = 0
+    for i in mats:
+        weighted += (nodeAPD[i.name].value[0] * matWeights[i])
+        weight += matWeights[i]
+    return weighted / weight
 
 
 #Loads the drop data for the nodes into a pd.dataframe 
 def loadData(filename:str, jp = False) -> pd.DataFrame:
-    #Could use the atlas academy db for more  up to date data. Could be good if this becomes a web app.
+    #Could use the atlas academy db for more up to date data. Could be good if this becomes a web app.
     #column indices that are actually used - remember this is 0 indexed
-    #Note that the column numbers are different on jp and NA pages - this is NA
-    cols = [1,2] + list(range((9-1),55))
-    matNames = ["CLAW", "HEART", "SCALE", "ROOT", "HORN", "TEARSTONE", "GREASE", "LAMP", "SCARAB", "LANUGO", "GALLSTONE", "WINE", "CORE", "MIRROR", "EGG", "STAR", "FRUIT", "DEMONFLAME", "SEED", "LANTERN", "OCTUPLET", "SERPENT", "FEATHER", "GEAR", "PAGE", "BABY", "HORSESHOE", "KNIGHT", "SHELL", "MAGATAMA", "ICE", "RING", "STEEL", "BELL", "ARROW", "TIARA", "PARTICLE", "THREAD", "PROOF", "BONE", "FANG", "DUST", "CHAIN", "NEEDLE", "FLUID", "STAKE", "GUNPOWDER"]
-    #index doesn't get names
-    colNames = ["id", "name"] + matNames
-
+    #Note that the column numbers are different on jp and NA pages - this is NA - this can be used instead of manually deleteing columns in the csv, but the rows do need to be manually filtered to allow correct typing.
     #csv needs all closed nodes, the extra headers removed. The extra cols can probably be filtered, but its easier to remove in csv, since widths may be different
+    #cols = [1,2] + list(range((9-1),55)) #recheck thise before using
+    matNames = ["CLAW", "HEART", "SCALE", "ROOT", "HORN", "TEARSTONE", "GREASE", "LAMP", "SCARAB", "LANUGO", "GALLSTONE", "WINE", "CORE", "MIRROR", "EGG", "STAR", "FRUIT", "DEMONFLAME", "SEED", "LANTERN", "OCTUPLET", "SERPENT", "FEATHER", "GEAR", "PAGE", "BABY", "HORSESHOE", "KNIGHT", "SHELL", "MAGATAMA", "ICE", "RING", "STEEL", "BELL", "ARROW", "TIARA", "PARTICLE", "THREAD", "PROOF", "BONE", "FANG", "DUST", "CHAIN", "NEEDLE", "FLUID", "STAKE", "GUNPOWDER"]
+    #index doesn't get a name
+    colNames = ["id", "name"] + matNames
 
     with open(filename, "r") as file:
         #df = pd.read_csv(file, skiprows=skiprows, usecols=cols, header=None, names=colNames)
@@ -190,22 +178,40 @@ def getWeights(nodes: pd.DataFrame) -> [float]:
     matWeights = mats.min().tolist()
     return matWeights
 
-if __name__ == "__main__":
+
     # combo1 = list(itertools.combinations(range(0,31), 1))
     # combo2 = list(itertools.combinations(range(0,31), 2))
+
+if __name__ == "__main__":
 
     #################################################
     # Only edit variables below
     # 
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
-    mats = [Mat.NEEDLE, Mat.HEART, Mat.BONE]
+    mats:[Mat] = [Mat.NEEDLE, Mat.HEART, Mat.BONE]
 
     # JP or NA server
-    jp = False
+    jp:bool = False
 
     # Operation to judge which mixed modes are better. Weighted average is recommended
-    op = Op.WEIGHTEDAVG
+    op:Op = Op.WEIGHTEDAVG
+
+    #Should the results be saved to a file or just printed in the terminal?
+    saveToFile:bool = False
+    #Should the result have extra text to make it easily human readable? - may also change filetype
+    readableOutput:bool = True
+    #The filename Excluding the ending.
+    outFilename:str = "mats"
+
+    ##################################################
+    # Advanced Settings 
+
+    # When multiple mats are selected, it check each grouping of mats.
+    # This controls how many results can come from a single combination. 
+    maxCombinations:int = None
+
+    # Total results in the output file
 
     # Don't edit below this line (unless you want to)
     ##################################################
@@ -219,4 +225,17 @@ if __name__ == "__main__":
     nodes = loadData(filename, jp)
     print(nodes)
     matWeights = getWeights(nodes)
-    print(matWeights)
+
+
+    filteredTest = filterNodes(["CORE", "HEART"])
+    if not filteredTest.empty:
+        print(filteredTest)
+    else:
+        print("No possible nodes")
+
+
+    if saveToFile:
+        if readableOutput:
+            outFilename = outFilename + ".txt"
+        else:
+            outFilename = outFilename + ".csv"
