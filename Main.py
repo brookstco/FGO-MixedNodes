@@ -1,5 +1,8 @@
 # CBrooks 2021
 
+#To use: Go to almost the bottom for the variable to change how this runs (server/mats/etc.). Then run and the file will output.
+#All mats are in an enum here at the top for reference.
+
 import os
 import numpy as np
 import pandas as pd
@@ -114,9 +117,11 @@ class Mat(IntEnum):
     # Mystic Gunpowder
     GUNPOWDER = 46
 
+
 def matNamesList(mats:[Mat]) -> [str]:
     """Returns the names of a list of mats as strings for use as column headers"""
     return [i.name for i in mats]
+
 
 class Op(IntEnum):
     """Enum for the operation used to calculate the best node"""
@@ -134,6 +139,7 @@ class SimpleNode:
     def __init__(self, nodeId: int, value:float = np.nan):
         self.nodeId = int(nodeId)
         self.value = value
+
 
 class NodeSet:
     """Simplified node information. Contains a list of pd.df indices and the combined value"""
@@ -155,25 +161,6 @@ class NodeSet:
             self.nodeIds.append(int(node.nodeId))
             self.value += node.value
 
-
-
-def weightedAvgAPDList(nodeAPD:[float], mats: [int], matWeights: [float]) -> float:
-    """ Returns weighted APD for a node (in list form)"""
-    weighted: float = 0
-    weight: float = 0
-    for i in mats:
-        weighted += (nodeAPD[i] * matWeights[i])
-        weight += matWeights[i]
-    return weighted / weight
-
-def weightedAvgAPD(nodeAPD:pd.DataFrame, mats: [Mat], matWeights: [float]) -> float:
-    """Returns weighted APD for a node. The node should be passed in as a single row dataframe."""
-    weighted: float = 0
-    weight: float = 0
-    for i in mats:
-        weighted += (nodeAPD[i.name].value[0] * matWeights[i])
-        weight += matWeights[i]
-    return weighted / weight
 
 def weightedAvgAPDTuple(nodeAPD:namedtuple, mats: [Mat], matWeights: [float]) -> float:
     """Returns weighted APD for a node. The node should be passed in as a namedTuple."""
@@ -232,6 +219,7 @@ def partition(iterable):
 def filterNodes(nodes: pd.DataFrame, mats:[Mat]) -> pd.DataFrame:
     """Returns a pd.df with all the ineligible nodes (rows) removed."""
     return nodes.dropna(subset = matNamesList(mats))
+
 
 def filterSlicedNodes(nodes: pd.DataFrame, slicedMats:[[Mat]]) -> [pd.DataFrame]:
     """Returns a list of pd.df that are filtered to sets of mats from a given list of lists"""
@@ -294,6 +282,7 @@ def getNodeSets(nodes: pd.DataFrame, mats:[Mat], op:Op, matWeights: [float], max
     allSets.sort(key=lambda x: x.value, reverse=False)
     return allSets
 
+
 def convertNodeSet(nodes: pd.DataFrame, nodeSet: NodeSet, readableOutput:bool = True):
     """Converts a nodeset into a string. readableOutput does not currently have any affect"""
     #Round value to 2 place, and start the output string
@@ -307,6 +296,7 @@ def convertNodeSet(nodes: pd.DataFrame, nodeSet: NodeSet, readableOutput:bool = 
     output.append("\n")
     #Joining a list is faster than repeatedly adding to a string
     return "".join(output)
+
 
 def outputNodeSets(outFilename:str, nodeSets: [NodeSet], nodes: pd.DataFrame, useSubdirectory:bool = True, subdirectory:str = "", readableOutput:bool = True):
     """Saves the nodeSets to a file"""
@@ -324,17 +314,18 @@ def outputNodeSets(outFilename:str, nodeSets: [NodeSet], nodes: pd.DataFrame, us
         f.write(convertNodeSet(nodes, ns, readableOutput))
 
     f.close()
-              
+      
 
-
+#Saved for later for possible generating all of some combination - like all 2 mat nodes, etc. - ends up with huge number of results though
 # combo1 = list(itertools.combinations(range(0,31), 1))
 # combo2 = list(itertools.combinations(range(0,31), 2))
 
+
 if __name__ == "__main__":
 
-    #################################################
-    # Only edit variables below
-
+    ##################################################################################################
+    ##################################################################################################
+    # EDIT VARIABLES HERE:
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
     mats:[Mat] = [Mat.CLAW, Mat.SERPENT]
@@ -364,25 +355,23 @@ if __name__ == "__main__":
     maxOutputNodes:int = 10
 
 
-
-    ##################################################
-    # Advanced Settings 
+    ###################################################################################################
+    # Advanced Settings -- Maybe more to come?
 
     # When multiple mats are selected, it check each grouping of mats.
     # This controls how many results can come from a single combination. 0 will allow the maximum amount.
     maxNodeCombinations:int = 0 #Not implemented yet
 
     # Don't edit below this line (unless you want to)
-    ##################################################
-
+    ###################################################################################################
+    ##################################################################################################
 
 
     filename = ""
     if jp:
-        filename = "apd_jp2.csv"
+        filename = "apd_jp.csv"
     else:
-        filename = "apd_na2.csv"
-
+        filename = "apd_na.csv"
 
 
     nodes = loadData(filename, jp)
@@ -418,4 +407,6 @@ if __name__ == "__main__":
     
 
     print("Complete.")
-        
+
+
+# You ended up too far down, go up a little bit.        
