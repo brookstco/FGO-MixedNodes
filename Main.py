@@ -3,7 +3,7 @@
 #import numpy as np
 import pandas as pd
 import itertools
-from itertools import combinations, chain
+from itertools import chain, combinations
 import math
 from enum import IntEnum
 #from collections import defaultdict
@@ -115,11 +115,19 @@ class Mat(IntEnum):
 def matNamesList(mats:[Mat]) -> [str]:
     return [i.name for i in mats]
 
-
 class Op(IntEnum):
     AVERAGE = 0
     MAX = 1
     WEIGHTEDAVG = 2 #This is optimal I think
+
+class SimpleNode:
+    #List of row ids from the df.
+    nodeId:int
+    #The value of the NodeSet. Lower is better. 0 or less is invalid
+    value:float = 0
+    def __init__(self, nodeId, value):
+        self.nodeId = nodeId
+        self.value = value
 
 class NodeSet:
     #List of row ids from the df.
@@ -179,9 +187,6 @@ def loadData(filename:str, jp = False) -> pd.DataFrame:
         df = pd.read_csv(file, header=None, names=colNames)
         return df
 
-#Returns a pd.df with all the ineligible nodes removed.
-def filterNodes(mats:[Mat]) -> pd.DataFrame:
-    return nodes.dropna(subset = matNamesList(mats))
 
 #Sets Matweights above to a list of the lowest apd for each mat
 def getWeights(nodes: pd.DataFrame) -> [float]:
@@ -190,16 +195,60 @@ def getWeights(nodes: pd.DataFrame) -> [float]:
     return matWeights
 
 
-def generateSplits(mats:[Mat]) -> []:
-    subsets = [v for a in range(len(x)) for v in combinations(x, a)]
-    for i in range(len(subsets)/2 + 1):
-        print list(chain(subsets[i])), ' ', [e for e in x if e not in subsets[i]]
 
-def getNodeSets(nodes: pd.DataFrame, mats:[Mat]):
-    pass
+#Gotten from http://wordaligned.org/articles/partitioning-with-python
+def sliceable(xs):
+    '''Return a sliceable version of the iterable xs.'''
+    try:
+        xs[:0]
+        return xs
+    except TypeError:
+        return tuple(xs)
+def partition(iterable):
+    s = sliceable(iterable)
+    n = len(s)
+    b, mid, e = [0], list(range(1, n)), [n]
+    #getslice = s.__getitem__
+    splits = (d for i in range(n) for d in combinations(mid, i))
+    return [[s[sl] for sl in map(slice, chain(b, d), chain(d, e))]
+            for d in splits]
 
 
+#Returns a pd.df with all the ineligible nodes removed.
+def filterNodes(nodes: pd.DataFrame, mats:[Mat]) -> pd.DataFrame:
+    return nodes.dropna(subset = matNamesList(mats))
 
+def getFilteredSlices(nodes: pd.DataFrame, slicedMats:[[Mat]]) -> [pd.DataFrame]:
+        #Goes through each set of mats in the combo
+        filteredNodes = []
+        for i in slicedMats:
+            filtered = filterNodes(nodes, i)
+            if filtered.empty:
+                return []
+            else:
+                filteredNodes.append(filtered)
+
+
+#https://stackoverflow.com/questions/58567199/memory-efficient-way-for-list-comprehension-of-pandas-dataframe-using-multiple-c
+def getFilteredSimpleNodes(nodes: pd.DataFrame, slicedMats:[[Mat]], op:Op)->[SimpleNode]:
+    filteredNodes = getFilteredSlices(nodes, slicedMats)
+    print ([row for row in zip([filteredNodes[i].values for i in nodes.columns])])
+
+
+#maxNodeCombinations is the limit of how many combinations from one node set can be generated. Value <= 0 mean all are generated.
+def getNodeSets(nodes: pd.DataFrame, mats:[Mat], op:Op, maxNodeCombinations:int = 0):
+    #Preemptively rows that don't contain any mats?  - dropna frops everything in the list, not just some.
+    allSets = []
+    #figures out every combination of mats
+    for combo in partition(mats):
+        filtered = getFilteredSimpleNodes(nodes, combo, op)
+        if not filtered:
+            #goes back to top of loop on next set, since this one was impossible
+            continue
+        else:
+            print("here")
+
+                
 
 
 # combo1 = list(itertools.combinations(range(0,31), 1))
@@ -247,11 +296,11 @@ if __name__ == "__main__":
         filename = "apd_na2.csv"
 
     nodes = loadData(filename, jp)
-    print(nodes)
+    #print(nodes)
     matWeights = getWeights(nodes)
 
 
-    filteredTest = filterNodes([Mat.CORE, Mat.HEART])
+    filteredTest = filterNodes(nodes, mats)
     if not filteredTest.empty:
         print(filteredTest)
     else:
@@ -259,6 +308,9 @@ if __name__ == "__main__":
 
 
     outputNodes:[NodeSet] = []
+
+    n = getNodeSets(nodes, mats, op)
+
 
     if saveToFile:
         if readableOutput:
