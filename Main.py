@@ -1,5 +1,6 @@
 # CBrooks 2021
 
+import os
 import numpy as np
 import pandas as pd
 import itertools
@@ -307,16 +308,23 @@ def convertNodeSet(nodes: pd.DataFrame, nodeSet: NodeSet, readableOutput:bool = 
     #Joining a list is faster than repeatedly adding to a string
     return "".join(output)
 
-def outputNodeSets(outFilename:str, nodeSets: [NodeSet], nodes: pd.DataFrame, readableOutput:bool = True):
+def outputNodeSets(outFilename:str, nodeSets: [NodeSet], nodes: pd.DataFrame, useSubdirectory:bool = True, subdirectory:str = "", readableOutput:bool = True):
     """Saves the nodeSets to a file"""
-    f = open(outFilename, "w")
+    if useSubdirectory:
+        try:
+            os.mkdir(subdirectory)
+        except Exception:
+            pass
+        f = open(os.path.join(subdirectory,outFilename), "w")
+
+    else:
+        f = open(outFilename, "w")
 
     for ns in nodeSets:
         f.write(convertNodeSet(nodes, ns, readableOutput))
 
     f.close()
-
-                
+              
 
 
 # combo1 = list(itertools.combinations(range(0,31), 1))
@@ -326,7 +334,7 @@ if __name__ == "__main__":
 
     #################################################
     # Only edit variables below
-    # 
+
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
     mats:[Mat] = [Mat.CLAW, Mat.SERPENT]
@@ -341,8 +349,16 @@ if __name__ == "__main__":
     saveToFile:bool = True #Not implemented
     #Should the result have extra text to make it easily human readable? -  Currently only changes filetype
     readableOutput:bool = True 
-    #The filename Excluding the ending.
+
+    #Use an auto output filename with region and materials, and optionally the op
+    autoname:bool = True
+    includeOp:bool = False
+    #The filename Excluding the ending. Ignored if autoname is True
     outFilename:str = "matsResult"
+
+    #Save output into a subfolder
+    useSubdirectory = True
+    subdirectoryName = "Output"
 
     # Total results in the output file. 0 will allow the maximum amount.
     maxOutputNodes:int = 10
@@ -382,11 +398,23 @@ if __name__ == "__main__":
 
 
     if saveToFile:
+        if autoname:
+            if jp:
+                outFilename = "jp_"
+            else:
+                outFilename = "na_"
+
+            if includeOp:
+                outFilename += (str(op.name) + "_")
+
+            for mat in mats:
+                outFilename += (str(mat.name) + "_")
+
         if readableOutput:
             outFilename += ".txt"
         else:
             outFilename += ".csv"
-        outputNodeSets(outFilename, nodeSet, nodes, readableOutput)
+        outputNodeSets(outFilename, nodeSet, nodes, useSubdirectory, subdirectoryName, readableOutput)
     
 
     print("Complete.")
