@@ -328,6 +328,7 @@ if __name__ == "__main__":
     # EDIT VARIABLES HERE:
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
+    #Uses an Enum. Each mat will be in the form Mat.MATERIAL. 
     mats:[Mat] = [Mat.FLUID, Mat.HEART]
 
     # JP or NA server
