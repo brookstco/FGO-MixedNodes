@@ -21,7 +21,7 @@ class Mat(IntEnum):
     # Spirit Root
     ROOT = 3
     # Warhorse's Young Horn
-    HORN = 4
+    WARHORSE = 4
     # Tearstone of Blood
     TEARSTONE = 5
     # Black Beast Grease
@@ -131,7 +131,7 @@ class SimpleNode:
     #The value of the NodeSet.
     value:float = np.nan
     def __init__(self, nodeId: int, value:float = np.nan):
-        self.nodeId = nodeId
+        self.nodeId = int(nodeId)
         self.value = value
 
 class NodeSet:
@@ -140,9 +140,20 @@ class NodeSet:
     nodeIds:[int] = []
     #The value of the NodeSet.
     value:float = np.nan
-    def __init__(self, nodeIds: [int], value:float = np.nan):
-        self.nodeIds = nodeIds
-        self.value = value
+    # def __init__(self, nodeIds: [int], value:float = np.nan):
+    #     self.nodeIds = nodeIds
+    #     self.value = value
+    def __init__(self, nodes:[SimpleNode]):
+        self.nodeIds = []
+        self.value = 0
+        self.addSimpleNodes(nodes)
+
+    def addSimpleNodes(self, nodes:[SimpleNode]):
+        """Add all nodes in a list to the set."""
+        for node in nodes:
+            self.nodeIds.append(int(node.nodeId))
+            self.value += node.value
+
 
 
 def weightedAvgAPDList(nodeAPD:[float], mats: [int], matWeights: [float]) -> float:
@@ -181,7 +192,7 @@ def loadData(filename:str, jp = False) -> pd.DataFrame:
     #Note that the column numbers are different on jp and NA pages - this is NA - this can be used instead of manually deleteing columns in the csv, but the rows do need to be manually filtered to allow correct typing.
     #csv needs all closed nodes, the extra headers removed. The extra cols can probably be filtered, but its easier to remove in csv, since widths may be different
     #cols = [1,2] + list(range((9-1),55)) #recheck thise before using
-    matNames = ["CLAW", "HEART", "SCALE", "ROOT", "HORN", "TEARSTONE", "GREASE", "LAMP", "SCARAB", "LANUGO", "GALLSTONE", "WINE", "CORE", "MIRROR", "EGG", "STAR", "FRUIT", "DEMONFLAME", "SEED", "LANTERN", "OCTUPLET", "SERPENT", "FEATHER", "GEAR", "PAGE", "BABY", "HORSESHOE", "KNIGHT", "SHELL", "MAGATAMA", "ICE", "RING", "STEEL", "BELL", "ARROW", "TIARA", "PARTICLE", "THREAD", "PROOF", "BONE", "FANG", "DUST", "CHAIN", "NEEDLE", "FLUID", "STAKE", "GUNPOWDER"]
+    matNames = ["CLAW", "HEART", "SCALE", "ROOT", "WARHORSE", "TEARSTONE", "GREASE", "LAMP", "SCARAB", "LANUGO", "GALLSTONE", "WINE", "CORE", "MIRROR", "EGG", "STAR", "FRUIT", "DEMONFLAME", "SEED", "LANTERN", "OCTUPLET", "SERPENT", "FEATHER", "GEAR", "PAGE", "BABY", "HORSESHOE", "KNIGHT", "SHELL", "MAGATAMA", "ICE", "RING", "STEEL", "BELL", "ARROW", "TIARA", "PARTICLE", "THREAD", "PROOF", "BONE", "FANG", "DUST", "CHAIN", "NEEDLE", "FLUID", "STAKE", "GUNPOWDER"]
     #index doesn't get a name
     colNames = ["id", "name"] + matNames
 
@@ -250,7 +261,7 @@ def getFilteredSlicedSimpleNodes(nodes: pd.DataFrame, slicedMats:[[Mat]], op:Op,
             rows = []
             for rowtuple in df.itertuples():
                 if op == Op.WEIGHTEDAVG:
-                    n = SimpleNode(rowtuple.index, weightedAvgAPDTuple(rowtuple, slicedMats[matindex], matWeights))
+                    n = SimpleNode(rowtuple[0], weightedAvgAPDTuple(rowtuple, slicedMats[matindex], matWeights))
                 #implement the other types here
                 #elif op == Op
                 else:
@@ -266,20 +277,44 @@ def getNodeSets(nodes: pd.DataFrame, mats:[Mat], op:Op, matWeights: [float], max
     allSets = []
     #figures out every combination of mats
     for combo in partition(mats):
-        print("Combo:")
-        print(combo)
         #get list of df that each are filtered to the mat combinations. If its empty, skip.
         filtered = getFilteredSlicedSimpleNodes(nodes, combo, op, matWeights)
         if not filtered:
             #goes back to top of loop on next set, since this one was impossible
-            print("skip")
             continue
         else:
             #go through the combination of nodes and build up a list of possible sets
             #This is the main area to increase efficiency. Reduce copying the df, and get only the top combinations, not all of them.
-            print("here")
-    
+            permutations = list(itertools.product(*filtered))
+            for s in permutations:
+                ns = NodeSet(s)
+                allSets.append(ns)
+    #Reverse mean descending. Need bool flag for this based on levels or sets? Different func?            
+    allSets.sort(key=lambda x: x.value, reverse=False)
     return allSets
+
+def convertNodeSet(nodes: pd.DataFrame, nodeSet: NodeSet, readableOutput:bool = True):
+    """Converts a nodeset into a string. readableOutput does not currently have any affect"""
+    #Round value to 2 place, and start the output string
+    output = [str(round(nodeSet.value, 2))]
+    for i in nodeSet.nodeIds:
+        output.append(", (")
+        output.append(nodes.at[i, "id"])
+        output.append(", ")
+        output.append(nodes.at[i, "name"])
+        output.append(")")
+    output.append("\n")
+    #Joining a list is faster than repeatedly adding to a string
+    return "".join(output)
+
+def outputNodeSets(outFilename:str, nodeSets: [NodeSet], nodes: pd.DataFrame, readableOutput:bool = True):
+    """Saves the nodeSets to a file"""
+    f = open(outFilename, "w")
+
+    for ns in nodeSets:
+        f.write(convertNodeSet(nodes, ns, readableOutput))
+
+    f.close()
 
                 
 
@@ -294,7 +329,7 @@ if __name__ == "__main__":
     # 
     
     # Set currentMats to a specific set of mats. Larger sets will take longer to run.
-    mats:[Mat] = [Mat.NEEDLE, Mat.HEART, Mat.BONE]
+    mats:[Mat] = [Mat.CLAW, Mat.SERPENT]
 
     # JP or NA server
     jp:bool = False
@@ -302,12 +337,17 @@ if __name__ == "__main__":
     # Operation to judge which mixed modes are better. Weighted average is recommended
     op:Op = Op.WEIGHTEDAVG
 
-    #Should the results be saved to a file or just printed in the terminal?
-    saveToFile:bool = False
-    #Should the result have extra text to make it easily human readable? - may also change filetype
-    readableOutput:bool = True
+    #Should the results be saved to a file or just printed in the terminal? - Doesn't display in terminal yet
+    saveToFile:bool = True #Not implemented
+    #Should the result have extra text to make it easily human readable? -  Currently only changes filetype
+    readableOutput:bool = True 
     #The filename Excluding the ending.
-    outFilename:str = "mats"
+    outFilename:str = "matsResult"
+
+    # Total results in the output file. 0 will allow the maximum amount.
+    maxOutputNodes:int = 10
+
+
 
     ##################################################
     # Advanced Settings 
@@ -315,9 +355,6 @@ if __name__ == "__main__":
     # When multiple mats are selected, it check each grouping of mats.
     # This controls how many results can come from a single combination. 0 will allow the maximum amount.
     maxNodeCombinations:int = 0 #Not implemented yet
-
-    # Total results in the output file. 0 will allow the maximum amount.
-    maxOutputNodes:int = 0
 
     # Don't edit below this line (unless you want to)
     ##################################################
@@ -340,13 +377,17 @@ if __name__ == "__main__":
     outputNodes:[NodeSet] = []
 
     nodeSet = getNodeSets(nodes, mats, op, matWeights, maxNodeCombinations)
+    if maxOutputNodes > 0:
+        nodeSet = nodeSet[:maxOutputNodes]
 
 
     if saveToFile:
         if readableOutput:
-            outFilename = outFilename + ".txt"
+            outFilename += ".txt"
         else:
-            outFilename = outFilename + ".csv"
+            outFilename += ".csv"
+        outputNodeSets(outFilename, nodeSet, nodes, readableOutput)
+    
 
-
+    print("Complete.")
         
