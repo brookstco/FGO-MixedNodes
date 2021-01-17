@@ -1,54 +1,101 @@
-# BRONZE
-PROOF
-BONE
-FANG
-DUST
-CHAIN
-NEEDLE
-FLUID
-STAKE
-GUNPOWDER
-
-# SILVER
-SEED
-LANTERN
-OCTUPLET
-SERPENT
-FEATHER
-GEAR
-PAGE
-BABY
-HORSESHOE
-KNIGHT
-SHELL
-MAGATAMA
-ICE
-RING
-STEEL
-BELL
-# JP ONLY
-ARROW
-TIARA
-PARTICLE
-THREAD
-
 # GOLD
+# Claw of Chaos
 CLAW
+# Heart of the Foreign God
 HEART
+# Dragon's Reverse Scale
 SCALE
+# Spirit Root
 ROOT
-HORN
+# Warhorse's Young Horn
+WARHORSE
+# Tearstone of Blood
 TEARSTONE
+# Black Beast Grease
 GREASE
+# Lamp of Evil-Sealing
 LAMP
+# Scarab of Wisdom
 SCARAB
+# Primordial Lanugo
 LANUGO
+# Cursed Beast Gallstone
 GALLSTONE
+# Mysterious Divine Wine
 WINE
+# Reactor Core of Dawn
 CORE
 # JP ONLY
+# Tsukumo Mirror
 MIRROR
+# Egg of Truth
 EGG
+# Glittering Star Shard
 STAR
+# Fruit of Eternity
 FRUIT
+# Demon Flame Lantern
 DEMONFLAME
+
+# SILVER
+# Seed of Yggdrasil
+SEED
+# Ghost Lantern
+LANTERN
+# Octuplet Crystal
+OCTUPLET
+# Serpent Jewel
+SERPENT
+# Phoenix Feather
+FEATHER
+# Eternal Gear
+GEAR
+# Forbidden Page
+PAGE
+# Homunculus Baby
+BABY
+# Meteor Horseshoe
+HORSESHOE
+# Great Knight Medal
+KNIGHT
+# Shell of Reminiscense
+SHELL
+# Refined Magatama
+MAGATAMA
+# Eternal Ice
+ICE
+# Giant's Ring
+RING
+# Aurora Steel
+STEEL
+# Soundless Bell
+BELL
+# JP ONLY
+# Arrowhead of Disastrous Sin
+ARROW
+# Moonlit Tiara
+TIARA
+# Divine Spirit Particle
+PARTICLE
+# Rainbow Thread Ball
+THREAD
+
+# BRONZE
+# Proof of Hero
+PROOF
+# Evil Bone
+BONE
+# Dragon Fang
+FANG
+# Void's Dust
+DUST
+# Fool's Chain
+CHAIN
+# Deadly Poisonous Needle
+NEEDLE
+# Mystic Spinal Fluid
+FLUID
+# Stake of Wailing Night
+STAKE
+# Mystic Gunpowder
+GUNPOWDER
