@@ -6,7 +6,7 @@ import itertools
 from itertools import chain, combinations
 import math
 from enum import IntEnum
-#from collections import defaultdict
+from collections import namedtuple #I'm not positive this needs to be imported, but it help the tool hints at least
 
 #Mats in the order of the csv. Value can be used as index for matweights, and .name can be used as the column names in the pd.df
 class Mat(IntEnum):
@@ -124,8 +124,18 @@ class Op(IntEnum):
     WEIGHTEDAVG = 2 #This is optimal I think
 
 
+class SimpleNode:
+    """Simplified node information. Contains a pd.df index and its value"""
+    #List of row ids from the df.
+    nodeId:int
+    #The value of the NodeSet.
+    value:float = np.nan
+    def __init__(self, nodeId: int, value:float = np.nan):
+        self.nodeId = nodeId
+        self.value = value
+
 class NodeSet:
-    """Simplified node information. Contains a list of pd.df index and the value"""
+    """Simplified node information. Contains a list of pd.df indices and the combined value"""
     #List of row ids from the df.
     nodeIds:[int] = []
     #The value of the NodeSet.
@@ -150,6 +160,16 @@ def weightedAvgAPD(nodeAPD:pd.DataFrame, mats: [Mat], matWeights: [float]) -> fl
     weight: float = 0
     for i in mats:
         weighted += (nodeAPD[i.name].value[0] * matWeights[i])
+        weight += matWeights[i]
+    return weighted / weight
+
+def weightedAvgAPDTuple(nodeAPD:namedtuple, mats: [Mat], matWeights: [float]) -> float:
+    """Returns weighted APD for a node. The node should be passed in as a namedTuple."""
+    weighted: float = 0
+    weight: float = 0
+    for i in mats:
+        #Access a named tuple by the enum name value, then multiply by the weight
+        weighted += (getattr(nodeAPD, i.name) * matWeights[i])
         weight += matWeights[i]
     return weighted / weight
 
@@ -178,7 +198,6 @@ def getWeights(nodes: pd.DataFrame) -> [float]:
     return matWeights
 
 
-
 #Gotten from http://wordaligned.org/articles/partitioning-with-python
 def sliceable(xs):
     '''Return a sliceable version of the iterable xs.'''
@@ -202,43 +221,62 @@ def filterNodes(nodes: pd.DataFrame, mats:[Mat]) -> pd.DataFrame:
     """Returns a pd.df with all the ineligible nodes (rows) removed."""
     return nodes.dropna(subset = matNamesList(mats))
 
-def getFilteredSlices(nodes: pd.DataFrame, slicedMats:[[Mat]]) -> [pd.DataFrame]:
-        #Goes through each set of mats in the combo
-        filteredNodes = []
-        for i in slicedMats:
-            filtered = filterNodes(nodes, i)
-            if filtered.empty:
-                return []
-            else:
-                filteredNodes.append(filtered)
+def filterSlicedNodes(nodes: pd.DataFrame, slicedMats:[[Mat]]) -> [pd.DataFrame]:
+    """Returns a list of pd.df that are filtered to sets of mats from a given list of lists"""
+    #Goes through each set of mats in the combo
+    filteredNodes = []
+    for i in slicedMats:
+        #Get a filtered dataframe for each mat. This might be really inefficient, but since the data set is pretty small, we'll survive for now.
+        filtered = filterNodes(nodes, i)
+        if filtered.empty:
+            #If any are empty, it means the whole thing is impossible, so return an empty list
+            return []
+        else:
+            filteredNodes.append(filtered)
+    return filteredNodes
 
 
-#https://stackoverflow.com/questions/58567199/memory-efficient-way-for-list-comprehension-of-pandas-dataframe-using-multiple-c
-def getFilteredSlicedSimpleNodes(nodes: pd.DataFrame, slicedMats:[Mat], op:Op)->[SimpleNode]:
+def getFilteredSlicedSimpleNodes(nodes: pd.DataFrame, slicedMats:[[Mat]], op:Op, matWeights: [float])->[[SimpleNode]]:
+    """Return a list of SimpleNodes for a list of mats"""
     output = []
-    slicedNodes = getFilteredSlices(nodes, slicedMats)
+    slicedNodes = filterSlicedNodes(nodes, slicedMats)
     if not slicedNodes:
         return []
     else:
-        for df in slicedNodes:
-            output.append([row for row in zip([df[i] for i in nodes.columns])])
+        #Also gets the index, so it can access the correct set of mats
+        for matindex, df in enumerate(slicedNodes):
+            #yeah, yeah, this isn't the most efficient. It is the easiest here though.
+            #https://stackoverflow.com/questions/58567199/memory-efficient-way-for-list-comprehension-of-pandas-dataframe-using-multiple-c
+            rows = []
+            for rowtuple in df.itertuples():
+                if op == Op.WEIGHTEDAVG:
+                    n = SimpleNode(rowtuple.index, weightedAvgAPDTuple(rowtuple, slicedMats[matindex], matWeights))
+                #implement the other types here
+                #elif op == Op
+                else:
+                    return []
+                rows.append(n)
+            output.append(rows)
     return output
-    
 
 
 #maxNodeCombinations is the limit of how many combinations from one node set can be generated. Value <= 0 mean all are generated.
-def getNodeSets(nodes: pd.DataFrame, mats:[Mat], op:Op, maxNodeCombinations:int = 0) -> [NodeSet]:
+def getNodeSets(nodes: pd.DataFrame, mats:[Mat], op:Op, matWeights: [float], maxNodeCombinations:int = 0) -> [NodeSet]:
     #Preemptively rows that don't contain any mats?  - dropna frops everything in the list, not just some.
     allSets = []
     #figures out every combination of mats
     for combo in partition(mats):
+        print("Combo:")
         print(combo)
-        filtered = getFilteredSlicedSimpleNodes(nodes, combo, op)
-        print(filtered)
+        #get list of df that each are filtered to the mat combinations. If its empty, skip.
+        filtered = getFilteredSlicedSimpleNodes(nodes, combo, op, matWeights)
         if not filtered:
             #goes back to top of loop on next set, since this one was impossible
+            print("skip")
             continue
         else:
+            #go through the combination of nodes and build up a list of possible sets
+            #This is the main area to increase efficiency. Reduce copying the df, and get only the top combinations, not all of them.
             print("here")
     
     return allSets
@@ -276,7 +314,7 @@ if __name__ == "__main__":
 
     # When multiple mats are selected, it check each grouping of mats.
     # This controls how many results can come from a single combination. 0 will allow the maximum amount.
-    maxNodeCombinations:int = 0
+    maxNodeCombinations:int = 0 #Not implemented yet
 
     # Total results in the output file. 0 will allow the maximum amount.
     maxOutputNodes:int = 0
@@ -284,27 +322,24 @@ if __name__ == "__main__":
     # Don't edit below this line (unless you want to)
     ##################################################
 
+
+
     filename = ""
     if jp:
         filename = "apd_jp2.csv"
     else:
         filename = "apd_na2.csv"
 
+
+
     nodes = loadData(filename, jp)
-    #print(nodes)
+
     matWeights = getWeights(nodes)
-
-
-    filteredTest = filterNodes(nodes, mats)
-    if not filteredTest.empty:
-        print(filteredTest)
-    else:
-        print("No possible nodes")
-
+    #If adding custom weights, deal with them here.
 
     outputNodes:[NodeSet] = []
 
-    nodeSet = getNodeSets(nodes, mats, op)
+    nodeSet = getNodeSets(nodes, mats, op, matWeights, maxNodeCombinations)
 
 
     if saveToFile:
@@ -312,3 +347,6 @@ if __name__ == "__main__":
             outFilename = outFilename + ".txt"
         else:
             outFilename = outFilename + ".csv"
+
+
+        
