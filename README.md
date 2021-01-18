@@ -8,7 +8,7 @@ Download fgo-MixedNodes.py and either apd_jp.csv or apd_na.csv based on your ser
 You will need to have python 3 installed, and some packages may need to be installed (pandas may need to be installed seperately, but the rest should be default, I think). See online tutorials for help - there are plenty.
 
 Open fgo in an editor, do not just run it. Near the bottom, there is a section surrounded by lines of `#`. Edit the vars in this section to have the server and materials that you want the output for. Then run the program. A file will be created, or overwritten if it already exists, with the list of nodes.
-Materials are in an Enum format - Mat.MATERIAL (These are listed at the top of the file or in the mats.txt file for reference). You add materials into the list seperate by commas. For example [Mat.BONE, Mat.HEART]. 
+Materials are in an Enum format - Mat.MATERIAL (These are listed at the top of the file or in the mats txt files for reference). You add materials into the list seperate by commas. For example [Mat.BONE, Mat.HEART]. 
 Note: Larger numbers of materials can take longer to process. "Complete" will always be printed in the terminal when the program finishes.
 
 The output shows a list from best to worst of the combination of nodes that is best for getting all of the materials that you listed. The number is the value of the operation that was done.
